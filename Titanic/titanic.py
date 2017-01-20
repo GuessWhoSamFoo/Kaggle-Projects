@@ -41,3 +41,37 @@ for row in test_file_object:
 test_file.close()
 prediction_file.close()
 
+fare_ceiling = 40
+data[data[0::,9].astype(np.float) >= fare_ceiling, 9] = fare_ceiling - 1.0
+
+fare_bracket_size = 10
+num_price_brackets = fare_ceiling / fare_bracket_size
+
+num_of_classes = len(np.unique(data[0::,2]))
+
+survival_table = np.zeros((2,num_of_classes, num_price_brackets))
+
+for i in xrange(num_of_classes):
+    for j in xrange(num_of_classes):
+        women_only_stats = data[
+            (data[0::,4] == 'female')
+            & (data[0::,2].astype(np.float) == i+1)
+            & (data[0:,9].astype(np.float) >= j*fare_bracket_size)
+            & (data[0:,9].astype(np.float) < (j+1)*fare_bracket_size),
+            1
+        ]
+
+for i in xrange(num_of_classes):
+    for j in xrange(num_of_classes):
+        men_only_stats = data[
+            (data[0::,4] != 'female')
+            & (data[0::,2].astype(np.float) == i+1)
+            & (data[0:,9].astype(np.float) >= j*fare_bracket_size)
+            & (data[0:,9].astype(np.float) < (j+1)*fare_bracket_size),
+            1
+        ]
+
+survival_table[0,i,j] = np.mean(women_only_stats.astype(np.float))
+survival_table[1,i,j] = np.mean(men_only_stats.astype(np.float))
+
+print survival_table
